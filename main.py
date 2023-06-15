@@ -1,5 +1,4 @@
 import os
-
 import pathlib
 import random
 import shutil
@@ -15,36 +14,28 @@ def download_comics(comics_url, path):
 
 
 def get_comics(comic_number, path):
-    # формирование ссылки для запроса
     page_url = f'https://xkcd.com/{comic_number}/info.0.json'
 
-    # запрос
     response = requests.get(page_url)
     response.raise_for_status()
 
-    # получение ссылки
     comics_url = response.json()['img']
 
-    # загрузка комикса
     download_comics(comics_url, path)
 
-    # получение комментария к комиксу
     comics_comment = response.json()['alt']
     return comics_comment
 
 
 def grt_upload_url(params, group_id, vk_api_url):
-    # добавление нужных параметров для запроса
     params_update = {
         'group_id': group_id,
     }
     params.update(params_update)
 
-    # формирование ссылки для запроса
     method = 'photos.getWallUploadServer'
     vk_method_url = f'{vk_api_url}/{method}'
 
-    # запрос для получения ссылки для загрузки
     response = requests.get(vk_method_url, params=params)
     response.raise_for_status()
 
@@ -54,33 +45,28 @@ def grt_upload_url(params, group_id, vk_api_url):
 
 
 def get_server_info(path, url):
-    with open(path, 'rb') as file:  # открыть файл для чтения
+    with open(path, 'rb') as file:
         files = {
             'photo': file,
         }
 
-        # запрос для загрузки изображения на сервер
         response = requests.post(url, files=files)
         response.raise_for_status()
 
-        # получение информации о сервере
         server_info = response.json()
 
     return server_info
 
 
 def get_info_for_post(vk_api_url, params, path, group_id):
-    # получение ссылки для загрузки
     url = grt_upload_url(params, group_id, vk_api_url)
 
-    # получение информации о сервере и загрузка изображения на сервер
     server_info = get_server_info(path, url)
 
     server = server_info['server']
     photo = server_info['photo']
     photo_hash = server_info["hash"]
 
-    # добавление нужных параметров для запроса
     params_update = {
         'server': server,
         'photo': photo,
@@ -88,7 +74,6 @@ def get_info_for_post(vk_api_url, params, path, group_id):
     }
     params.update(params_update)
 
-    # формирование ссылки для запроса
     method = 'photos.saveWallPhoto'
     vk_method_url = f'{vk_api_url}/{method}'
 
@@ -102,10 +87,8 @@ def get_info_for_post(vk_api_url, params, path, group_id):
 
 
 def post_vk(vk_api_url, group_id, params, path, comics_comment):
-    # получение информации для поста
     attachments = get_info_for_post(vk_api_url, params, path, group_id)
 
-    # добавление нужных параметров для запроса
     params_update = {
         'attachments': attachments,
         'owner_id': -group_id,
@@ -114,11 +97,9 @@ def post_vk(vk_api_url, group_id, params, path, comics_comment):
     }
     params.update(params_update)
 
-    # формирование ссылки для запроса
     method = 'wall.post'
     vk_method_url = f'{vk_api_url}/{method}'
 
-    # запрос для создания поста
     response = requests.post(vk_method_url, params=params)
     response.raise_for_status()
 
@@ -135,7 +116,6 @@ def main():
 
     path = os.path.join(books_folder_name, file_name)
 
-    # общие параметры для запросов
     params = {
         'access_token': access_token,
         'v': 5.313,
