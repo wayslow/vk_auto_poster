@@ -8,12 +8,12 @@ pip install -r requirements.txt
 ```
 
 ## Как заполнить .env
-В этом фале должны прописаться 2 переменные это `ACCESS_TOKEN`(гайд по получению [здесь](https://vk.com/dev/implicit_flow_user)) и `GROUP_ID`(гайд по получению [здесь](https://vk.com/faq18062)) в формате:
+В этом фале должны прописаться 2 переменные это `VK_ACCESS_TOKEN`(гайд по получению [здесь](https://vk.com/dev/implicit_flow_user)) и `VK_GROUP_ID`(гайд по получению [здесь](https://vk.com/faq18062)) в формате:
 ```dotenv
-GROUP_ID={ваше значение}
-ACCESS_TOKEN={ваше значение}
+VK_GROUP_ID={ваше значение}
+VK_ACCESS_TOKEN={ваше значение}
 ```
-Обратите внимание, что `ACCESS_TOKEN` ингода меняется.
+Обратите внимание, что `VK_ACCESS_TOKEN` ингода меняется.
 ## Как Запустить
 В папке с репозиторием нужно записать команду:
 ```
