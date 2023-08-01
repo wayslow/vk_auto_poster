@@ -39,18 +39,21 @@ def get_comics(comic_number, path):
     return comics_comment
 
 
-def get_server_property(path, url):
+def upload_photo(path, url):
     with open(path, 'rb') as file:
         files = {
             'photo': file,
         }
 
-        response = requests.post(url, files=files)
-        response.raise_for_status()
-        check_stastus(response)
+    response = requests.post(url, files=files)
+    response.raise_for_status()
+    check_stastus(response)
 
     server_property = response.json()
-    return server_property
+    server = server_property['server']
+    photo = server_property['photo']
+    photo_hash = server_property["hash"]
+    return server, photo, photo_hash
 
 
 def get_upload_url(vk_access_token, version, vk_group_id):
@@ -71,11 +74,7 @@ def get_upload_url(vk_access_token, version, vk_group_id):
     return upload_url
 
 
-def get_property_for_post(server_property, vk_access_token, version):
-    server = server_property['server']
-    photo = server_property['photo']
-    photo_hash = server_property["hash"]
-
+def save_wall_photo(server, photo, photo_hash, vk_access_token, version):
     params = {
         'access_token': vk_access_token,
         'server': server,
@@ -120,24 +119,26 @@ def main():
 
     vk_access_token = os.getenv('VK_ACCESS_TOKEN')
     vk_group_id = os.getenv('VK_GROUP_ID')
-    comic_number = random.randint(1, 2786)
-    file_name = f"{str(comic_number)}.png"
+    comic_count=2786
+    comic_number = random.randint(1, comic_count)
+    file_name = f"{comic_number}.png"
     books_folder_name = 'comiks'
 
     path = os.path.join(books_folder_name, file_name)
     version = 5.313,
-
-    pathlib.Path(books_folder_name).mkdir(parents=True, exist_ok=True)
-
-    comics_comment = get_comics(comic_number, path)
-
-    upload_url = get_upload_url(vk_access_token, version, vk_group_id)
-    server_property = get_server_property(path, upload_url)
-    attachments = get_property_for_post(server_property, vk_access_token, version)
     try:
+        pathlib.Path(books_folder_name).mkdir(parents=True, exist_ok=True)
+
+        comics_comment = get_comics(comic_number, path)
+
+        upload_url = get_upload_url(vk_access_token, version, vk_group_id)
+        server, photo, photo_hash = upload_photo(path, upload_url)
+        attachments = save_wall_photo(server, photo, photo_hash, vk_access_token, version)
+
         post_vk(attachments, vk_group_id, vk_access_token, version, path, comics_comment)
+
     except ValueError:
-        shutil.rmtree(books_folder_name)
+        pass
     shutil.rmtree(books_folder_name)
 
 
