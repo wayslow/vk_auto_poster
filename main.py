@@ -2,8 +2,6 @@ import os
 import pathlib
 import random
 import shutil
-import functools
-from pprint import pprint
 
 import requests
 from dotenv import load_dotenv
@@ -12,10 +10,9 @@ VK_API_URL = 'https://api.vk.com/method/'
 
 
 def check_stastus(response):
-    print(response.json())
     if response.json()['error']:
         raise requests.HTTPError()
-
+    return response.json()
 
 
 def download_comics(comics_url, path):
@@ -44,12 +41,11 @@ def upload_photo(path, url):
         files = {
             'photo': file,
         }
+        response = requests.post(url, files=files)
 
-    response = requests.post(url, files=files)
     response.raise_for_status()
-    check_stastus(response)
+    server_property = check_stastus(response)
 
-    server_property = response.json()
     server = server_property['server']
     photo = server_property['photo']
     photo_hash = server_property["hash"]
@@ -68,9 +64,8 @@ def get_upload_url(vk_access_token, version, vk_group_id):
 
     response = requests.get(vk_method_url, params=params)
     response.raise_for_status()
-    check_stastus(response)
+    upload_url = check_stastus(response)['response']['upload_url']
 
-    upload_url = response.json()['response']['upload_url']
     return upload_url
 
 
@@ -88,15 +83,14 @@ def save_wall_photo(server, photo, photo_hash, vk_access_token, version):
 
     response = requests.post(vk_method_url, params=params)
     response.raise_for_status()
-    check_stastus(response)
+    post_property = check_stastus(response)['response'][0]
 
-    post_property = response.json()['response'][0]
     owner_id = post_property['owner_id']
     media_id = post_property['id']
     return f"photo{owner_id}_{media_id}"
 
 
-def post_vk(attachments, vk_group_id, vk_access_token, version, path, comics_comment):
+def post_vk(attachments, vk_group_id, vk_access_token, version, comics_comment):
     params = {
         'access_token': vk_access_token,
         'attachments': attachments,
@@ -119,7 +113,7 @@ def main():
 
     vk_access_token = os.getenv('VK_ACCESS_TOKEN')
     vk_group_id = os.getenv('VK_GROUP_ID')
-    comic_count=2786
+    comic_count = 2786
     comic_number = random.randint(1, comic_count)
     file_name = f"{comic_number}.png"
     books_folder_name = 'comiks'
@@ -135,11 +129,10 @@ def main():
         server, photo, photo_hash = upload_photo(path, upload_url)
         attachments = save_wall_photo(server, photo, photo_hash, vk_access_token, version)
 
-        post_vk(attachments, vk_group_id, vk_access_token, version, path, comics_comment)
+        post_vk(attachments, vk_group_id, vk_access_token, version, comics_comment)
 
-    except ValueError:
-        pass
-    shutil.rmtree(books_folder_name)
+    finally:
+        shutil.rmtree(books_folder_name)
 
 
 if __name__ == '__main__':
