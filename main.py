@@ -9,10 +9,14 @@ from dotenv import load_dotenv
 VK_API_URL = 'https://api.vk.com/method/'
 
 
-def check_stastus(response):
-    if response.json()['error']:
+def check_status(response):
+    response_json = response.json()
+    try:
+        response_json['error']
+    except KeyError:
+        return response_json
+    else:
         raise requests.HTTPError()
-    return response.json()
 
 
 def download_comics(comics_url, path):
@@ -44,7 +48,7 @@ def upload_photo(path, url):
         response = requests.post(url, files=files)
 
     response.raise_for_status()
-    server_property = check_stastus(response)
+    server_property = check_status(response)
 
     server = server_property['server']
     photo = server_property['photo']
@@ -64,7 +68,7 @@ def get_upload_url(vk_access_token, version, vk_group_id):
 
     response = requests.get(vk_method_url, params=params)
     response.raise_for_status()
-    upload_url = check_stastus(response)['response']['upload_url']
+    upload_url = check_status(response)['response']['upload_url']
 
     return upload_url
 
@@ -83,7 +87,7 @@ def save_wall_photo(server, photo, photo_hash, vk_access_token, version):
 
     response = requests.post(vk_method_url, params=params)
     response.raise_for_status()
-    post_property = check_stastus(response)['response'][0]
+    post_property = check_status(response)['response'][0]
 
     owner_id = post_property['owner_id']
     media_id = post_property['id']
@@ -105,7 +109,7 @@ def post_vk(attachments, vk_group_id, vk_access_token, version, comics_comment):
 
     response = requests.post(vk_method_url, params=params)
     response.raise_for_status()
-    check_stastus(response)
+    check_status(response)
 
 
 def main():
